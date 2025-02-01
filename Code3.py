@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
 from scipy.stats import jarque_bera
-from sklearn import mixture
+from sklearn.mixture import GaussianMixture
 import matplotlib.pyplot as plt
 
 # Step 1: Load the data (assuming the Excel file is named 'portfolio_data.xlsx')
-file_path = 'portfolio_data.xlsx'
+file_path = '579004_579091.xlsx'
 data = pd.read_excel(file_path, sheet_name='Data')
 
 # Extract the loss returns for the two stocks
