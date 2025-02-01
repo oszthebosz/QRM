@@ -13,17 +13,22 @@ stock1_returns = data['Stock1'].values  # Assuming 'Stock1' column in the Data s
 stock2_returns = data['Stock2'].values  # Assuming 'Stock2' column in the Data sheet
 
 # Step 2: Conduct the JB test for normality
-_, p_value_stock1 = jarque_bera(stock1_returns)
-_, p_value_stock2 = jarque_bera(stock2_returns)
+JB_stat_1, p_value_stock1 = jarque_bera(stock1_returns)
+JB_stat_2, p_value_stock2 = jarque_bera(stock2_returns)
 
+print(f"JB Test statistic for Stock 1: {JB_stat_1}")
+print(f"JB Test statistic for Stock 2: {JB_stat_2}")
 print(f"JB Test p-value for Stock 1: {p_value_stock1}")
 print(f"JB Test p-value for Stock 2: {p_value_stock2}")
 
 # Check normality of the portfolio return
 weights = np.array([0.4, 0.6])
 portfolio_returns = weights[0] * stock1_returns + weights[1] * stock2_returns
-_, p_value_portfolio = jarque_bera(portfolio_returns)
+print(portfolio_returns[:10])
 
+JB_stat_port, p_value_portfolio = jarque_bera(portfolio_returns)
+
+print(f"JB Test statistic for Portfolio: {JB_stat_port}")
 print(f"JB Test p-value for Portfolio: {p_value_portfolio}")
 
 # Step 3: Fit a Normal Mixture Model
@@ -39,6 +44,11 @@ gmm.fit(portfolio_returns.reshape(-1, 1))
 means = gmm.means_.flatten()
 covariances = gmm.covariances_.flatten()
 weights = gmm.weights_
+print(f'Means: {means}, Variances: {covariances}, Weights: {weights}')
+
+# Print the probabilities of normalities for the two components
+probabilities = gmm.predict_proba(portfolio_returns.reshape(-1, 1))
+print(f'Probabilities: {probabilities}')
 
 # To get the 1% quantile, we first calculate the weighted cumulative distribution
 quantile_99 = np.percentile(portfolio_returns, 1)  # The 1% quantile directly from the data
