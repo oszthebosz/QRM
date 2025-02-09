@@ -33,7 +33,7 @@ print(f"JB Test p-value for Portfolio: {p_value_portfolio}")
 
 # Step 3: Fit a Normal Mixture Model
 # Fit a 2-component Gaussian Mixture model to the portfolio returns
-gmm = GaussianMixture(n_components=2, tol = 1e-10, max_iter=1000)
+gmm = GaussianMixture(n_components=2, tol = 1e-10, max_iter=100000)
 gmm.fit(portfolio_returns.reshape(-1, 1))
 
 # Step 4: Calculate the 99% VaR

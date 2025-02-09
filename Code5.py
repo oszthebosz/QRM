@@ -26,7 +26,7 @@ predicted_volatility = np.sqrt(garch_forecast.variance.iloc[-1, 0])  # Convert v
 
 # Historical Simulation (HS) VaR for residuals
 residuals = garch_fit.resid / garch_fit.conditional_volatility  # Standardized residuals (errors)
-hs_var_error = np.percentile(residuals, 99)  # 1% quantile of standardized residuals
+hs_var_error = np.percentile(residuals, 99)  # 99% quantile of standardized residuals
 
 # Predicted VaR(99%) for portfolio losses
 predicted_var_99 = mu + predicted_volatility * hs_var_error
