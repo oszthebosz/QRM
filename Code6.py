@@ -15,15 +15,19 @@ data
 
 # 6) Reverse Clayton copula
 
-df_loss = data.copy().mul(-1)
+# Convert returns to losses
+df_loss = data.copy().mul(-1) 
 
-# Fit Marginals to t-distributions
+# Fit marginals to t-distributions
 def fit_student_t(data):
     df, loc, scale = stats.t.fit(data, method="MLE")
     return df, loc, scale
 
 df1, loc1, scale1 = fit_student_t(df_loss.iloc[:,0])
 df2, loc2, scale2 = fit_student_t(df_loss.iloc[:,1])
+
+print(f"Stock 1; Mean: {loc1:.8f}, Sigma: {scale1:.6f}, Degrees of Freedom: {df1:.6f}")
+print(f"Stock 2; Mean: {loc2:.8f}, Sigma: {scale2:.6f}, Degrees of Freedom: {df2:.6f}")
 
 # Transform data to uniform [0,1] using CDF of fitted t-distributions
 U1 = stats.t.cdf(df_loss.iloc[:,0], df=df1, loc=loc1, scale=scale1)
@@ -36,7 +40,10 @@ V1, V2 = 1 - U1, 1 - U2
 tau = stats.kendalltau(V1, V2)[0]  
 theta = 2 * tau / (1 - tau)  
 
-# Validate using Upper Tail Dependence
+print(f"Kendall's tau: {tau:.4f}")
+print(f"Theta: {theta:.4f}")
+
+# Validate using upper tail Dependence
 data_sorted = data.copy()
 data_sorted.iloc[:] = np.sort(data, axis=0)
 n = len(data)
@@ -57,10 +64,12 @@ plt.xlabel("k")
 plt.ylabel("Empirical Lambda")
 plt.show()
 
+
 lambda_U_theoretical = 2 ** (-1 / theta)
 
-print(f"Fitted Clayton parameter theta using method of moments: {theta:.4f}")
-print(f"Empirical upper tail dependence: {lambda_U_empirical:.4f}")
+k = 30
+print(f"k used: {k}")
+print(f"Empirical upper tail dependence: {lambdas[(k-1)]:.4f}")
 print(f"Theoretical upper tail dependence: {lambda_U_theoretical:.4f}")
 
 def clayton_conditional_inverse(u, t, theta):
@@ -96,4 +105,4 @@ print(L_portfolio)
 
 var = np.percentile(L_portfolio, VAR_PERCENTAGE)
 
-print(f"Portfolio 99% VaR: {var:.4f}")
+print(f"Portfolio loss 99% VaR: {var:.4f}")
