@@ -3,16 +3,14 @@ import pandas as pd
 from arch import arch_model
 from scipy.stats import norm
 
-# Load portfolio return data (assuming it's already calculated)
+# Load data
 file_path = "579004_579091.xlsx"
 data = pd.read_excel(file_path, sheet_name="Data")
-
-# Assuming portfolio returns are stored in a column named 'Portfolio'
 portfolio_losses = data['Portfolio']
 
 # Fit a GARCH(1,1) model with normal innovations
 garch_model = arch_model(portfolio_losses, vol='Garch', p=1, q=1, dist='normal')
-garch_fit = garch_model.fit(disp="off")  # Fit the model silently
+garch_fit = garch_model.fit(disp="off")
 
 # Extract model parameters
 mu = garch_fit.params['mu']
@@ -21,15 +19,15 @@ alpha1 = garch_fit.params['alpha[1]']
 beta1 = garch_fit.params['beta[1]']
 
 # Forecast next-day volatility
-garch_forecast = garch_fit.forecast(horizon=1)
-predicted_volatility = np.sqrt(garch_forecast.variance.iloc[-1, 0])  # Convert variance to standard deviation
+garch_forecast = garch_fit.forecast(horizon=1) # next day volatility 
+predicted_volatility = np.sqrt(garch_forecast.variance.iloc[-1, 0]) # as standard deviation
 
 # Historical Simulation (HS) VaR for residuals
-residuals = garch_fit.resid / garch_fit.conditional_volatility  # Standardized residuals (errors)
+residuals = garch_fit.resid / garch_fit.conditional_volatility  # Standardized residuals
 hs_var_error = np.percentile(residuals, 99)  # 99% quantile of standardized residuals
 
 # Predicted VaR(99%) for portfolio losses
-predicted_var_99 = mu + predicted_volatility * hs_var_error
+predicted_var_99 = mu + predicted_volatility * hs_var_error # using formula from the slides
 
 # Print results
 print("GARCH(1,1) Model Parameters:")
