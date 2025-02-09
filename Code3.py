@@ -24,7 +24,7 @@ print(f"JB Test p-value for Stock 2: {p_value_stock2}")
 # Check normality of the portfolio return
 weights = np.array([0.4, 0.6])
 portfolio_returns = weights[0] * stock1_returns + weights[1] * stock2_returns
-print(portfolio_returns[:10])
+# print(portfolio_returns[:10])
 
 JB_stat_port, p_value_portfolio = jarque_bera(portfolio_returns)
 
@@ -33,7 +33,7 @@ print(f"JB Test p-value for Portfolio: {p_value_portfolio}")
 
 # Step 3: Fit a Normal Mixture Model
 # Fit a 2-component Gaussian Mixture model to the portfolio returns
-gmm = GaussianMixture(n_components=2)
+gmm = GaussianMixture(n_components=2, tol = 1e-10, max_iter=1000)
 gmm.fit(portfolio_returns.reshape(-1, 1))
 
 # Step 4: Calculate the 99% VaR
@@ -43,26 +43,43 @@ gmm.fit(portfolio_returns.reshape(-1, 1))
 # Extract the means, variances, and weights of the two normal distributions in the mixture
 means = gmm.means_.flatten()
 covariances = gmm.covariances_.flatten()
+st_devs = np.sqrt(covariances)
 weights = gmm.weights_
-print(f'Means: {means}, Variances: {covariances}, Weights: {weights}')
+print(f'Means: {means}, St. Deviations: {st_devs}, Weights: {weights}')
 
-# Print the probabilities of normalities for the two components
-probabilities = gmm.predict_proba(portfolio_returns.reshape(-1, 1))
-print(f'Probabilities: {probabilities}')
+# To get the 99% quantile, we first calculate the weighted cumulative distribution
+quantile_99 = np.percentile(portfolio_returns, 99)  # The 99% quantile directly from the data
+print(f"99% VaR from historical data: {quantile_99}")
+# quantile_by_hand = np.sort(portfolio_returns)[1979]  # The 99% quantile directly from the data
+print(f"99% VaR from historical data by hand: {np.sort(portfolio_returns)[1977:1982]}")
 
-# To get the 1% quantile, we first calculate the weighted cumulative distribution
-quantile_99 = np.percentile(portfolio_returns, 1)  # The 1% quantile directly from the data
+# Given parameters for the normal mixture
+pi = weights[0]   # Weight for the first normal distribution
+mu1, sigma1 = means[0], st_devs[0]  # Mean and std dev of first normal component
+mu2, sigma2 = means[1], st_devs[1]  # Mean and std dev of second normal component
+N = 10000000  # Number of simulations
 
-# Step 5: Display results
-print(f"99% VaR from normal mixture model: {quantile_99}")
+# Simulate losses
+rand_vals = np.random.rand(N)  # Generate uniform random numbers
+losses = np.where(rand_vals < pi, 
+                  np.random.normal(mu1, sigma1, N), 
+                  np.random.normal(mu2, sigma2, N))
+
+# Compute VaR at 99% confidence level
+VaR_99 = np.percentile(losses, 99)
+
+print(f"Estimated 99% VaR: {VaR_99:.5f}")
+
+
 
 # Optional: Plot the portfolio loss distribution and GMM density
-x = np.linspace(min(portfolio_returns), max(portfolio_returns), 1000)
-gmm_density = np.exp(gmm.score_samples(x.reshape(-1, 1)))
 
-plt.figure(figsize=(10, 6))
-plt.hist(portfolio_returns, bins=50, density=True, alpha=0.6, color='g', label='Portfolio Returns')
-plt.plot(x, gmm_density, label='Normal Mixture Model', color='r', linewidth=2)
-plt.title('Portfolio Loss Distribution and Normal Mixture Model')
-plt.legend()
-plt.show()
+# x = np.linspace(min(portfolio_returns), max(portfolio_returns), 1000)
+# gmm_density = np.exp(gmm.score_samples(x.reshape(-1, 1)))
+
+# plt.figure(figsize=(10, 6))
+# plt.hist(portfolio_returns, bins=50, density=True, alpha=0.6, color='g', label='Portfolio Returns')
+# plt.plot(x, gmm_density, label='Normal Mixture Model', color='r', linewidth=2)
+# plt.title('Portfolio Loss Distribution and Normal Mixture Model')
+# plt.legend()
+# plt.show()
